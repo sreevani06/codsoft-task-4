@@ -1,0 +1,38 @@
+dataset<-read.csv('spam.csv')
+View(dataset)
+library(text2vec)
+library(caTools)
+library(ggplot2)
+library(GGally)
+library(e1071)
+split=sample.split(dataset$v1,SplitRatio = 0.60)
+training_set=subset(dataset,split==TRUE)
+testing_set=subset(dataset,split==FALSE)
+View(training_set)
+View(testing_set)
+library(ggplot2)
+
+
+summary(training_set)
+summary(testing_set)
+training_set = na.omit(training_set)
+testing_set = na.omit(testing_set)
+training_set$v1 = as.numeric(as.factor(training_set$v1))
+training_set[] = lapply(training_set, function(x) if(is.numeric(x)) ifelse(is.finite(x), x, NA) else x)
+testing_set[] = lapply(testing_set, function(x) if(is.numeric(x)) ifelse(is.finite(x), x, NA) else x)
+
+training_set = na.omit(training_set)
+testing_set = na.omit(testing_set)
+
+testing_set$v2 = factor(testing_set$v2, levels = levels(training_set$v2))
+
+classifier1 = svm(formula = v1 ~ ., 
+                  data = training_set, 
+                  type = 'C-classification', 
+                  kernel = 'radial')
+
+pred1 = predict(classifier1, type = 'response', newdata = testing_set)
+testing_set = na.omit(testing_set)
+cm1 = table(testing_set$v1, pred1)
+print(cm1)
+ggplot(dataset,aes(x=v1))+ theme_grey() + geom_bar() + labs(y="v2",title="spam detection")
